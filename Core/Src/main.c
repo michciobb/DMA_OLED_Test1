@@ -93,12 +93,12 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   SSD1306_init();
-  GFX_draw_fill_rect(0, 0, 64, 32, WHITE);
+  GFX_draw_fill_rect(0, 0, 128, 32, WHITE);
   //GFX_draw_char(10, 10, 'W', WHITE, BLACK, 4, 4);
-  GFX_draw_string(5, 5, (unsigned char *)"O  O", WHITE, BLACK, 1, 1);
+  GFX_draw_string(5, 5, (unsigned char *)"O  O", BLACK, WHITE, 1, 1);
 
   SSD1306_display_repaint();
-  GFX_draw_string(9, 9, (unsigned char *)"OOOO", WHITE, BLACK, 1, 1);
+  GFX_draw_string(15, 15, (unsigned char *)"OOOO", BLACK, WHITE, 1, 1);
   SSD1306_display_repaint();
 
   /* USER CODE END 2 */
@@ -138,6 +138,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -195,5 +196,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
