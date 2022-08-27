@@ -1,138 +1,224 @@
-/* The MIT License
- *
- * Copyright (c) 2020 Piotr Duba
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-/*!
- * @file Adafruit_SSD1306.h
- *
- * This is part of for Adafruit's SSD1306 library for monochrome
- * OLED displays: http://www.adafruit.com/category/63_98
- *
- * These displays use I2C or SPI to communicate. I2C requires 2 pins
- * (SCL+SDA) and optionally a RESET pin. SPI requires 4 pins (MOSI, SCK,
- * select, data/command) and optionally a reset pin. Hardware SPI or
- * 'bitbang' software SPI are both supported.
- *
- * Adafruit invests time and resources providing this open source code,
- * please support Adafruit and open-source hardware by purchasing
- * products from Adafruit!
- *
- * Written by Limor Fried/Ladyada for Adafruit Industries, with
- * contributions from the open source community.
- *
- * BSD license, all text above, and the splash screen header file,
- * must be included in any redistribution.
- *
- */
+#ifndef SSD1306_H_INCLUDED
+#define SSD1306_H_INCLUDED
+/*
+||
+||  Filename:	 		SSD1306.h
+||  Title: 			SSD1306 Driver
+||  Author: 			Efthymios Koktsidis
+||  Email:			efthymios.ks@gmail.com
+||  Compiler:		 	AVR-GCC
+||  Description:
+||  This library can drive SSD1306 based GLCD.
+||
+*/
 
-#ifndef _SSD1306_H_
-#define _SSD1306_H_
-
+//----- Headers ------------//
+#include <inttypes.h>
+//#include <delay.h>
+#include <string.h>
+//#include <io.h>
+//#include <avr/pgmspace.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define SSD1306_WIDTH	128
-#define SSD1306_HEIGHT	32
+#include "IO_Macros.h"
+#include "SSD1306_Settings.h"
+//#include "TWI.h"
+//--------------------------//
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+//----- Auxiliary data ---------------------------//
+#define GLCD_128_64 						0
+#define GLCD_128_32						1 
+#define GLCD_96_16						2
+	
+#define __GLCD_I2C_Address					0x3C	//0x3C or 0x3D
 
 #define SSD1306_I2C_ADDRESS (0x3C << 1)
 #define SSD1306_I2C_BUS hi2c1
 
 #define SSD1306_SPI_BUS hspi2
 
-/* The following "raw" color names are kept for backwards client compatability
- * They can be disabled by predefining this macro before including the Adafruit
- * header client code will then need to be modified to use the scoped enum
- * values directly
- */
-#ifndef NO_ADAFRUIT_SSD1306_COLOR_COMPATIBILITY
-#define BLACK SSD1306_BLACK     //< Draw 'off' pixels
-#define WHITE SSD1306_WHITE     //< Draw 'on' pixels
-#define INVERSE SSD1306_INVERSE //< Invert pixels
+#define __GLCD_RW						0
+#define __GLCD_SA0						1
+#define __GLCD_DC						6
+#define __GLCD_CO						7
+
+#if (GLCD_Size == GLCD_128_64) 
+	#define __GLCD_Screen_Width          			128
+	#define __GLCD_Screen_Height         			64
+#elif (GLCD_Size == GLCD_128_32)
+	#define __GLCD_Screen_Width         			128
+	#define __GLCD_Screen_Height        			32
+#elif (GLCD_Size == GLCD_96_16)
+	#define __GLCD_Screen_Width          			96
+	#define __GLCD_Screen_Height         			16
 #endif
-/* fit into the SSD1306_ naming scheme */
-#define SSD1306_BLACK 0   //< Draw 'off' pixels
-#define SSD1306_WHITE 1   //< Draw 'on' pixels
-#define SSD1306_INVERSE 2 //< Invert pixels
+#define	__GLCD_Screen_Line_Height				8
+#define __GLCD_Screen_Lines					(__GLCD_Screen_Height / __GLCD_Screen_Line_Height)
 
-/* Screen orientation */
-#define SSD1306_HORIZONTAL_MODE1 0
-#define SSD1306_VERTICAL 1
-#define SSD1306_HORIZONTAL_MODE2 2
+//Fundamental Command Table
+#define __GLCD_Command_Display_On				0xAF
+#define __GLCD_Command_Display_Off				0xAE
+#define __GLCD_Command_Constrast_Set				0x81
+#define __GLCD_Command_Display_All_On_Resume			0xA4
+#define __GLCD_Command_Display_All_On				0xA5
+#define __GLCD_Command_Display_Normal				0xA6
+#define __GLCD_Command_Display_Inverse				0xA7
 
-#define SSD1306_MEMORYMODE 0x20          //< See datasheet
-#define SSD1306_COLUMNADDR 0x21          //< See datasheet
-#define SSD1306_PAGEADDR 0x22            //< See datasheet
-#define SSD1306_SETCONTRAST 0x81         //< See datasheet
-#define SSD1306_CHARGEPUMP 0x8D          //< See datasheet
-#define SSD1306_SEGREMAP 0xA0            //< See datasheet
-#define SSD1306_DISPLAYALLON_RESUME 0xA4 //< See datasheet
-#define SSD1306_DISPLAYALLON 0xA5        //< Not currently used
-#define SSD1306_NORMALDISPLAY 0xA6       //< See datasheet
-#define SSD1306_INVERTDISPLAY 0xA7       //< See datasheet
-#define SSD1306_SETMULTIPLEX 0xA8        //< See datasheet
-#define SSD1306_DISPLAYOFF 0xAE          //< See datasheet
-#define SSD1306_DISPLAYON 0xAF           //< See datasheet
-#define SSD1306_COMSCANINC 0xC0          //< Not currently used
-#define SSD1306_COMSCANDEC 0xC8          //< See datasheet
-#define SSD1306_SETDISPLAYOFFSET 0xD3    //< See datasheet
-#define SSD1306_SETDISPLAYCLOCKDIV 0xD5  //< See datasheet
-#define SSD1306_SETPRECHARGE 0xD9        //< See datasheet
-#define SSD1306_SETCOMPINS 0xDA          //< See datasheet
-#define SSD1306_SETVCOMDETECT 0xDB       //< See datasheet
+//Scrolling Command Tab
+#define __GLCD_Command_Scroll_Activate				0x2F
+#define __GLCD_Command_Scroll_Deactivate			0x2E	
+#define __GLCD_Command_Scroll_Left				0x27
+#define __GLCD_Command_Scroll_Right				0x26
+#define __GLCD_Command_Scroll_Vertical_Left			0x2A
+#define __GLCD_Commad_Scroll_Vertical_Right			0x29
+#define __GLCD_Command_Scroll_Vertical_Area_Set			0xA3
 
-#define SSD1306_SETLOWCOLUMN 0x00  		 //< Not currently used
-#define SSD1306_SETHIGHCOLUMN 0x10 		 //< Not currently used
-#define SSD1306_SETSTARTLINE 0x40  		 //< See datasheet
+//Addressing Setting Command Table
+#define __GLCD_Command_Page_Addressing_Column_Lower_Set		0x00
+#define __GLCD_Command_Page_Addressing_Column_Higher_Set	0x10
+#define __GLCD_Command_Page_Addressing_Page_Start_Set		0xB0
+#define __GLCD_Command_Page_Address_Set				0x22
+#define __GLCD_Command_Memory_Addressing_Set			0x20
+#define __GLCD_Command_Column_Address_Set			0x21
 
-#define SSD1306_EXTERNALVCC 0x01  		 //< External display voltage source
-#define SSD1306_SWITCHCAPVCC 0x02 		 //< Gen. display voltage from 3.3V
+//Hardware Configuration
+#define __GLCD_Command_Display_Start_Line_Set			0x40
+#define __GLCD_Command_Display_Offset_Set			0xD3
+#define __GLCD_Command_Segment_Remap_Set			0xA0
+#define __GLCD_Command_Multiplex_Radio_Set			0xA8
+#define __GLCD_Command_Com_Output_Scan_Inc			0xC0
+#define __GLCD_Command_Com_Output_Scan_Dec			0xC8
+#define __GLCD_Command_Com_Pins_Set				0xDA
 
-#define SSD1306_RIGHT_HORIZONTAL_SCROLL 0x26              //< Init rt scroll
-#define SSD1306_LEFT_HORIZONTAL_SCROLL 0x27               //< Init left scroll
-#define SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29 //< Init diag scroll
-#define SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL 0x2A  //< Init diag scroll
-#define SSD1306_DEACTIVATE_SCROLL 0x2E                    //< Stop scroll
-#define SSD1306_ACTIVATE_SCROLL 0x2F                      //< Start scroll
-#define SSD1306_SET_VERTICAL_SCROLL_AREA 0xA3             //< Set scroll range
+//Timing and Driving Scheme Setting Command Table
+#define __GLCD_Command_Display_Clock_Div_Ratio_Set		0xD5
+#define __GLCD_Command_Display_Oscillator_Frequency_Set		0xD5
+#define __GLCD_Command_Precharge_Period_Set			0xD9
+#define __GLCD_Command_VCOMH_Deselect_Level_Set			0xDB
+#define __GLCD_Command_Nop					0xE3
 
-bool SSD1306_init(void);
-void SSD1306_draw_pixel(int16_t x, int16_t y, uint16_t color);
-void SSD1306_display_clear(void);
-void SSD1306_draw_fast_hline(int16_t x, int16_t y, int16_t w, uint16_t color);
-void SSD1306_draw_fast_hline_internal(int16_t x, int16_t y, int16_t w, uint16_t color);
-void SSD1306_draw_fast_vline(int16_t x, int16_t y, int16_t h, uint16_t color);
-void SSD1306_draw_fast_vline_internal(int16_t x, int16_t __y, int16_t __h, uint16_t color);
-bool SSD1306_get_pixel(int16_t x, int16_t y);
-uint8_t* SSD1306_get_buffer(void);
-void SSD1306_display_repaint(void);
-void SSD1306_start_scroll_right(uint8_t start, uint8_t stop);
-void SSD1306_start_scroll_left(uint8_t start, uint8_t stop);
-void SSD1306_start_scroll_diagright(uint8_t start, uint8_t stop);
-void SSD1306_start_scroll_diagleft(uint8_t start, uint8_t stop);
-void SSD1306_stop_scroll(void);
-void SSD1306_display_invert(bool i);
-void SSD1306_set_contrast(uint8_t contrast);
-void SSD1306_set_rotation(uint8_t rot);
-uint8_t SSD1306_get_rotation(void);
+//Charge Pump Command Table
+#define __GLCD_Command_Charge_Pump_Set				0x8D
 
-#endif // __SSD1306_H_
+//Reset delays (in ms)
+#define _GLCD_Delay_1						1
+#define _GLCD_Delay_2						10
+
+#if defined(GLCD_Error_Checking)
+	enum GLCD_Status_t
+	{
+		GLCD_Ok,
+		GLCD_Error
+	};
+#endif
+
+enum OperatingMode_t
+{
+	GLCD_Inverted		= __GLCD_Command_Display_Inverse,
+	GLCD_Non_Inverted	= __GLCD_Command_Display_Normal
+};
+
+enum PrintMode_t
+{
+	GLCD_Overwrite,
+	GLCD_Merge
+};
+
+enum Color_t
+{
+	GLCD_White = 0x00,
+	GLCD_Black = 0xFF
+};
+
+typedef struct
+{
+	uint8_t *Name;
+	uint8_t Width;
+	uint8_t Height;
+	uint8_t Lines;
+	enum PrintMode_t Mode;
+}Font_t;
+
+typedef struct
+{
+	#if defined(GLCD_Error_Checking)
+		enum GLCD_Status_t Status;
+	#endif
+	uint8_t X;
+	uint8_t Y;
+	enum OperatingMode_t Mode;
+	Font_t Font;
+}GLCD_t;
+//------------------------------------------------//
+
+//----- Prototypes ------------------------------------------------------------//
+void GLCD_SendCommand(uint8_t Command);
+void GLCD_SendData(const uint8_t Data);
+void GLCD_Setup(void);
+void GLCD_Reset(void);
+#if defined(GLCD_Error_Checking)
+	enum GLCD_Status_t GLCD_GetStatus(void);
+#endif
+void GLCD_Render(void);
+void GLCD_SetDisplay(const uint8_t On);
+void GLCD_SetContrast(const uint8_t Contrast);
+
+void GLCD_Clear(void);
+void GLCD_ClearLine(const uint8_t Line);
+void GLCD_GotoX(const uint8_t X);
+void GLCD_GotoY(const uint8_t Y);
+void GLCD_GotoXY(const uint8_t X, const uint8_t Y);
+void GLCD_GotoLine(const uint8_t Line);
+uint8_t GLCD_GetX(void);
+uint8_t GLCD_GetY(void);
+uint8_t GLCD_GetLine(void);
+
+void GLCD_SetPixel(const uint8_t X, const uint8_t Y, enum Color_t Color);
+void GLCD_SetPixels(uint8_t X1, uint8_t Y1, uint8_t X2, uint8_t Y2, enum Color_t Color);
+
+void GLCD_DrawBitmap(const uint8_t *Bitmap, uint8_t Width, const uint8_t Height, enum PrintMode_t Mode);
+void GLCD_DrawLine(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, enum Color_t Color);
+void GLCD_DrawRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, enum Color_t Color);
+void GLCD_DrawRoundRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, const uint8_t Radius, enum Color_t Color);
+void GLCD_DrawTriangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, const uint8_t X3, const uint8_t Y3, enum Color_t Color);
+void GLCD_DrawCircle(const uint8_t CenterX, const uint8_t CenterY, uint8_t Radius, enum Color_t Color);
+
+void GLCD_FillScreen(enum Color_t Color);
+void GLCD_FillRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, enum Color_t Color);
+void GLCD_FillRoundRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, const uint8_t Radius, enum Color_t Color);
+void GLCD_FillTriangle(uint8_t X1, uint8_t Y1, uint8_t X2, uint8_t Y2, uint8_t X3, uint8_t Y3, enum Color_t Color);
+void GLCD_FillCircle(const uint8_t CenterX, const uint8_t CenterY, const uint8_t Radius, enum Color_t Color);
+
+void GLCD_ScrollLeft(const uint8_t Start, const uint8_t End);
+void GLCD_ScrollRight(const uint8_t Start, const uint8_t End);
+void GLCD_ScrollDiagonalLeft(const uint8_t Start, const uint8_t End);
+void GLCD_ScrollDiagonalRight(const uint8_t Start, const uint8_t End);
+void GLCD_ScrollStop(void);
+
+void GLCD_InvertScreen(void);
+void GLCD_InvertRect(uint8_t X1, uint8_t Y1, uint8_t X2, uint8_t Y2);
+
+void GLCD_SetFont(const uint8_t *Name, const uint8_t Width, const uint8_t Height, enum PrintMode_t Mode);
+uint8_t GLCD_GetWidthChar(const char Character);
+uint16_t GLCD_GetWidthString(const char *Text);
+
+void GLCD_PrintChar(char Character);
+void GLCD_PrintString(const char *Text);
+
+void GLCD_PrintInteger(const int32_t Value);
+void GLCD_PrintDouble(double Value, const uint8_t Precision);
+//-----------------------------------------------------------------------------//
+	
+#ifdef __cplusplus
+}
+#endif
+
+#endif

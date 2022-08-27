@@ -26,7 +26,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "GFX.h"
+#include "SSD1306.h"
+#include "Font5x8.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,14 +93,18 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  SSD1306_init();
-  GFX_draw_fill_rect(0, 0, 128, 32, WHITE);
-  //GFX_draw_char(10, 10, 'W', WHITE, BLACK, 4, 4);
-  GFX_draw_string(5, 5, (unsigned char *)"O  O", BLACK, WHITE, 1, 1);
+  GLCD_Setup();
+  	GLCD_SetFont(Font5x8, 5, 8, GLCD_Overwrite);
 
-  SSD1306_display_repaint();
-  GFX_draw_string(15, 15, (unsigned char *)"OOOO", BLACK, WHITE, 1, 1);
-  SSD1306_display_repaint();
+  	GLCD_GotoXY(0, 0);
+  	GLCD_PrintString("Testing");
+  	GLCD_DrawLine(0, 8, 63, 31, GLCD_White);
+  	GLCD_DrawLine(40, 0, 63, 31, GLCD_Black);
+  	GLCD_DrawCircle(63, 31, 10, GLCD_Black);
+  	GLCD_InvertRect(0, 0, 39, 7);
+  	GLCD_InvertScreen();
+
+  	GLCD_Render();
 
   /* USER CODE END 2 */
 
@@ -107,6 +112,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*
+	  GLCD_ScrollLeft(0, 0x0F);
+	HAL_Delay(1000);
+	GLCD_ScrollRight(0, 0x0F);
+	HAL_Delay(1000);
+	GLCD_ScrollDiagonalLeft(0, 0x0F);
+	HAL_Delay(1000);
+	GLCD_ScrollDiagonalRight(0, 0x0F);
+	HAL_Delay(1000);
+	GLCD_ScrollStop();
+	HAL_Delay(1000);
+*/
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
