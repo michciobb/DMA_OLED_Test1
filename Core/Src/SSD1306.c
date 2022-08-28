@@ -19,14 +19,14 @@ GLCD_t __GLCD;
 //---------------------------//
 
 //----- Prototypes ----------------------------//
-static void GLCD_Send(const uint8_t Control, uint8_t *Data, const uint8_t Length);
+static void GLCD_Send(const uint8_t Control, uint8_t *Data, const uint16_t Length);
 static void GLCD_BufferWrite(const uint8_t X, const uint8_t Y, const uint8_t Data);
 static uint8_t GLCD_BufferRead(const uint8_t X, const uint8_t Y);
 static void GLCD_DrawHLine(uint8_t X1, uint8_t X2, const uint8_t Y, enum Color_t Color);
 static void GLCD_DrawVLine(uint8_t Y1, uint8_t Y2, const uint8_t X, enum Color_t Color);
 static void Int2bcd(int32_t Value, char BCD[]);
 
-static void SSD1306_send_com(uint8_t c);
+
 static uint8_t platform_write(uint8_t reg, uint8_t *bufp, uint16_t len);
 static uint8_t platform_write_dma(uint8_t reg, uint8_t *bufp, uint16_t len);
 
@@ -38,10 +38,7 @@ static uint8_t platform_write_dma(uint8_t reg, uint8_t *bufp, uint16_t len);
 //---------------------------------------------//
 
 //----- Functions -------------//
-static void SSD1306_send_com(uint8_t c)
-{
-	platform_write(0x00, &c, 1);
-}
+
 
 static uint8_t platform_write(uint8_t reg, uint8_t *bufp, uint16_t len)
 {
@@ -52,13 +49,15 @@ static uint8_t platform_write(uint8_t reg, uint8_t *bufp, uint16_t len)
 static uint8_t platform_write_dma(uint8_t reg, uint8_t *bufp, uint16_t len)
 {
 	HAL_I2C_Mem_Write_DMA(&SSD1306_I2C_BUS, SSD1306_I2C_ADDRESS, reg, 1, bufp, len);
+	//HAL_Delay(1);
 	return 0;
 }
 
 
 void GLCD_SendCommand(uint8_t Command)
 {
-	GLCD_Send(0<<__GLCD_DC, &Command, 1);
+	//GLCD_Send(0<<__GLCD_DC, &Command, 1);
+	platform_write(0x00, &Command, 1);
 }
 
 void GLCD_SendData(const uint8_t Data)
@@ -176,8 +175,13 @@ void GLCD_Render(void)
 	GLCD_SendCommand(__GLCD_Screen_Lines - 1);				//End
 
 	//Send buffer
-	for (i = 0 ; i < loop ; i++)
+/*
+	for (i = 0 ; i < loop ; i++){
 		GLCD_Send(1<<__GLCD_DC, &__GLCD_Buffer[i<<4], 16);
+		HAL_Delay(10);
+	}*/
+	GLCD_Send(1<<__GLCD_DC, &__GLCD_Buffer[0], 512);
+	//HAL_Delay(10);
 }
 
 void GLCD_SetDisplay(const uint8_t On)
@@ -1118,10 +1122,10 @@ void GLCD_PrintDouble(double Value, const uint8_t Precision)
 	}
 }
 
-static void GLCD_Send(const uint8_t Control, uint8_t *Data, const uint8_t Length)
+static void GLCD_Send(const uint8_t Control, uint8_t *Data, const uint16_t Length)
 {
 
-	platform_write(Control, Data, Length);
+	platform_write_dma(Control, Data, Length);
 
 	/*
 	uint8_t i;

@@ -98,13 +98,14 @@ int main(void)
 
   	GLCD_GotoXY(0, 0);
   	GLCD_PrintString("Testing");
-  	GLCD_DrawLine(0, 8, 63, 31, GLCD_White);
+  	GLCD_DrawLine(0, 8, 63, 31, GLCD_Black);
   	GLCD_DrawLine(40, 0, 63, 31, GLCD_Black);
   	GLCD_DrawCircle(63, 31, 10, GLCD_Black);
   	GLCD_InvertRect(0, 0, 39, 7);
   	GLCD_InvertScreen();
 
   	GLCD_Render();
+  	HAL_Delay(1000);
 
   /* USER CODE END 2 */
 
@@ -112,18 +113,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /*
-	  GLCD_ScrollLeft(0, 0x0F);
+
+	  GLCD_GotoXY(0, 0);
+	GLCD_PrintString("JEDENnnnnn");
+	GLCD_Render();
 	HAL_Delay(1000);
-	GLCD_ScrollRight(0, 0x0F);
+	GLCD_GotoXY(0, 0);
+	GLCD_PrintString("DWAAAdddddd");
+	GLCD_Render();
 	HAL_Delay(1000);
-	GLCD_ScrollDiagonalLeft(0, 0x0F);
-	HAL_Delay(1000);
-	GLCD_ScrollDiagonalRight(0, 0x0F);
-	HAL_Delay(1000);
-	GLCD_ScrollStop();
-	HAL_Delay(1000);
-*/
+
+
 
     /* USER CODE END WHILE */
 
