@@ -21,6 +21,7 @@
 #include "main.h"
 #include "dma.h"
 #include "i2c.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -28,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "SSD1306.h"
 #include "Font5x8.h"
+#include "processes.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,10 +94,14 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_Base_Start_IT(&htim16);
+
   GLCD_Setup();
   	GLCD_SetFont(Font5x8, 5, 8, GLCD_Overwrite);
-
+  	/*
   	GLCD_GotoXY(0, 0);
   	GLCD_PrintString("Testing");
   	GLCD_DrawLine(0, 8, 63, 31, GLCD_Black);
@@ -106,6 +112,13 @@ int main(void)
 
   	GLCD_Render();
   	HAL_Delay(1000);
+  	*/
+
+  	//Tworzymy trzy obiekty typu T_PROCESS
+  	create_obj(&current_proc, 1, current_event);
+  	create_obj(&voltage_proc, 0, voltage_event);
+  	create_obj(&battery_proc, 0, battery_event);
+
 
   /* USER CODE END 2 */
 
@@ -113,15 +126,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  PROCESSES_EVENT(1);
 
-	  GLCD_GotoXY(0, 0);
-	GLCD_PrintString("JEDENnnnnn");
-	GLCD_Render();
-	HAL_Delay(1000);
-	GLCD_GotoXY(0, 0);
-	GLCD_PrintString("DWAAAdddddd");
-	GLCD_Render();
-	HAL_Delay(1000);
 
 
 
@@ -170,9 +176,11 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_TIM16;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  PeriphClkInit.Tim16ClockSelection = RCC_TIM16CLK_HCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -180,7 +188,21 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM16)
+	{
 
+		if(++ms10_cnt>99){
+			ms10_cnt=0;
+			if(++s1_cnt>59) {	//co 60 sek
+				s1_cnt=0;
+
+			}
+		}
+
+	}
+}
 /* USER CODE END 4 */
 
 /**

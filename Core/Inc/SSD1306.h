@@ -215,6 +215,8 @@ void GLCD_PrintString(const char *Text);
 
 void GLCD_PrintInteger(const int32_t Value);
 void GLCD_PrintDouble(double Value, const uint8_t Precision);
+
+void GLCD_CopyAllBuffer(uint8_t *pbuf);
 //-----------------------------------------------------------------------------//
 	
 #ifdef __cplusplus

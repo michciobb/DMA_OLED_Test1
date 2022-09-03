@@ -30,6 +30,8 @@ static void Int2bcd(int32_t Value, char BCD[]);
 static uint8_t platform_write(uint8_t reg, uint8_t *bufp, uint16_t len);
 static uint8_t platform_write_dma(uint8_t reg, uint8_t *bufp, uint16_t len);
 
+void GLCD_CopyAllBuffer(uint8_t *pbuf);
+
 //static uint8_t * buffer;
 //static uint8_t rotation;
 
@@ -181,7 +183,7 @@ void GLCD_Render(void)
 		HAL_Delay(10);
 	}*/
 	GLCD_Send(1<<__GLCD_DC, &__GLCD_Buffer[0], 512);
-	//HAL_Delay(10);
+
 }
 
 void GLCD_SetDisplay(const uint8_t On)
@@ -1327,5 +1329,11 @@ static void Int2bcd(int32_t Value, char BCD[])
 		i++;
 	}
 	BCD[i] = '\0';
+}
+
+void GLCD_CopyAllBuffer(uint8_t *pbuf){
+	for(uint16_t i = 0; i<(__GLCD_Screen_Width*__GLCD_Screen_Lines); i++){
+		__GLCD_Buffer[i] = pbuf[i];
+	}
 }
 //-----------------------------//
