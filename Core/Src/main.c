@@ -115,7 +115,7 @@ int main(void)
   	*/
 
   	//Tworzymy trzy obiekty typu T_PROCESS
-  	create_obj(&current_proc, 1, current_event);
+  	create_obj(&current_proc, 0, current_event);
   	create_obj(&voltage_proc, 0, voltage_event);
   	create_obj(&battery_proc, 0, battery_event);
 
